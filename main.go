@@ -46,10 +46,27 @@ func getUserById(c *gin.Context) {
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
 }
 
+func deletUserById(c *gin.Context) {
+	id := c.Param("id")
+
+	var updatedUsers []User
+
+	// Iterasi melalui slice dan salin elemen-elemen yang tidak dihapus ke slice baru
+	for _, user := range users {
+		if user.Id != id {
+			updatedUsers = append(updatedUsers, user)
+		}
+	}
+	users = updatedUsers
+
+	c.IndentedJSON(http.StatusOK, users)
+}
+
 func main() {
 	router := gin.Default()
 	router.GET("api/get_users", getUsers)
 	router.GET("api/get_users/:id", getUserById)
 	router.POST("api/add_user", addUser)
+	router.PUT("api/dell_users/:id", deletUserById)
 	router.Run("localhost:8080")
 }
