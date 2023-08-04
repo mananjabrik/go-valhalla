@@ -51,7 +51,7 @@ func getUserById(c *gin.Context) {
 			return
 		}
 	}
-	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "user not found"})
 }
 
 func deletUserById(c *gin.Context) {
