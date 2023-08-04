@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -30,6 +31,10 @@ func addUser(c *gin.Context) {
 	if err := c.BindJSON(&newUser); err != nil {
 		return
 	}
+
+	lastUserId := len(users)
+	newUser.Id = fmt.Sprintf("%d", lastUserId)
+
 	users = append(users, newUser)
 	c.IndentedJSON(http.StatusCreated, newUser)
 }
