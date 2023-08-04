@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,8 +32,11 @@ func addUser(c *gin.Context) {
 		return
 	}
 
+	// create id from last index
 	lastUserId := len(users)
-	newUser.Id = fmt.Sprintf("%d", lastUserId)
+	lastUserId++
+	// assigne id
+	newUser.Id = strconv.Itoa(lastUserId)
 
 	users = append(users, newUser)
 	c.IndentedJSON(http.StatusCreated, newUser)
