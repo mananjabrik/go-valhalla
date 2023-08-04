@@ -1,28 +1,66 @@
 package main
 
 import (
+	"database/sql"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 )
 
 type User struct {
-	Id               string `json:"id"`
-	Address          string `json:"address"`
-	TelegramUsername string `json:"telegramUsername"`
-	Upline           string `json:"upline"`
-	BlockNumber      uint   `json:"blockNumber"`
-	Rank             uint   `json:"rank"`
+	Id               string         `json:"id"`
+	Address          string         `json:"address"`
+	Upline           string         `json:"upline"`
+	TelegramUsername sql.NullString `json:"telegramUsername"`
+	BlockNumber      uint           `json:"blockNumber"`
+	Rank             sql.NullInt16  `json:"rank"`
 }
 
 var users = []User{
-	{Id: "0", Address: "0xf4faaa84d20968f0cecd1ec7a0d1e10cf20b552c", TelegramUsername: "", Upline: "0x0", BlockNumber: 0, Rank: 1},
-	{Id: "1", Address: "0x976c30089cd5da634dde85432b336251c2634c3e", TelegramUsername: "", Upline: "0xf4faaa84d20968f0cecd1ec7a0d1e10cf20b552c", BlockNumber: 0, Rank: 0},
-	{Id: "2", Address: "0x4320cabe04a8308de7f813fd318758ef32655030", TelegramUsername: "", Upline: "0x976c30089cd5da634dde85432b336251c2634c3e", BlockNumber: 0, Rank: 0},
+	{Id: "0", Address: "0xf4faaa84d20968f0cecd1ec7a0d1e10cf20b552c", Upline: "0x0", BlockNumber: 0},
+	{Id: "1", Address: "0x976c30089cd5da634dde85432b336251c2634c3e", Upline: "0xf4faaa84d20968f0cecd1ec7a0d1e10cf20b552c", BlockNumber: 0},
+	{Id: "2", Address: "0x4320cabe04a8308de7f813fd318758ef32655030", Upline: "0x976c30089cd5da634dde85432b336251c2634c3e", BlockNumber: 0},
+}
+
+// DB set up
+func setupDB() *sql.DB {
+	// dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", DB_USER, DB_PASSWORD, DB_NAME)
+	connStr := "postgres://postgres:beritaunik1234@localhost:5432/valhalla?sslmode=disable"
+	db, err := sql.Open("postgres", connStr)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return db
 }
 
 func getUsers(c *gin.Context) {
+	db := setupDB()
+	defer db.Close() // Close the database connection after the function returns
+
+	rows, err := db.Query(`SELECT * FROM "User"`)
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var user User
+		err := rows.Scan(&user.Id, &user.Address, &user.TelegramUsername, &user.Upline, &user.BlockNumber, &user.Rank)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		user.TelegramUsername.String = "apa boss"
+		user.Rank.Int16 = 0
+		users = append(users, user)
+	}
+
 	c.IndentedJSON(http.StatusOK, users)
 }
 
@@ -71,6 +109,7 @@ func deletUserById(c *gin.Context) {
 }
 
 func main() {
+	// this will be printed in the terminal, confirming the connection to the database
 	router := gin.Default()
 	router.GET("api/get_users", getUsers)
 	router.GET("api/get_users/:id", getUserById)
